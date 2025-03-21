@@ -6,12 +6,18 @@ import pool from "./PoolConnection.js";
 postRouter.get("/posts", async (req, res) => {
     try {
       const result = await pool.query(`
-        SELECT 
-          posts.*, 
-          users.name AS user_name
-        FROM posts
-        JOIN users ON posts.user_id = users.user_id
-      `);
+      SELECT 
+        posts.*,
+        users.user_type,
+        COALESCE(sa.first_name, om.first_name) AS first_name,
+        COALESCE(sa.last_name, om.last_name) AS last_name,
+        organization.name AS organization_name
+      FROM posts
+      JOIN users ON posts.user_id = users.user_id
+      LEFT JOIN student_alumni sa ON users.user_id = sa.student_alumni_id
+      LEFT JOIN organization_member om ON users.user_id = om.member_id
+      LEFT JOIN organization ON posts.organization_id = organization.organization_id
+    `);
       res.json({ rows:result.rows });
     } catch (error) {
       console.error("Query error:", error);
