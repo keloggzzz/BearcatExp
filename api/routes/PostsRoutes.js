@@ -5,7 +5,13 @@ import pool from "./PoolConnection.js";
 //get all posts in the database
 postRouter.get("/posts", async (req, res) => {
     try {
-      const result = await pool.query("SELECT * from posts");
+      const result = await pool.query(`
+        SELECT 
+          posts.*, 
+          users.name AS user_name
+        FROM posts
+        JOIN users ON posts.user_id = users.user_id
+      `);
       res.json({ rows:result.rows });
     } catch (error) {
       console.error("Query error:", error);
