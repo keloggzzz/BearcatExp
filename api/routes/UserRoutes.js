@@ -43,7 +43,7 @@ userRouter.get("/users", async (req, res) => {
       const id = req.query.user_id;
   
       const result = await pool.query(`
-        SELECT u.*, sa.graduation_year, sa.major, sa.bio
+        SELECT u.*, sa.graduation_year, sa.major, sa.bio, sa.experience
         FROM users u
         LEFT JOIN student_alumni sa ON u.user_id = sa.student_alumni_id
         WHERE u.user_id = $1
