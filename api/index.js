@@ -10,10 +10,13 @@ import stuAluRouter from "./routes/StudAlumRoutes.js";
 import userRouter from "./routes/UserRoutes.js";
 
 const app=express();
+const allowedOrigins = ["http://localhost:5173"]; // frontend port
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
-app.use("/post", postRouter);
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true, // 🔥 This allows cookies, auth headers, etc.
+}));app.use("/post", postRouter);
 app.use("/orgMember", orgMemberRouter);
 app.use("/org", orgRouter);
 app.use("/stuAlu", stuAluRouter);

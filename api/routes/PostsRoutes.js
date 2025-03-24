@@ -4,43 +4,92 @@ import pool from "./PoolConnection.js";
 
 //get all posts in the database
 postRouter.get("/posts", async (req, res) => {
-    try {
-      const result = await pool.query(`
+  try {
+    const result = await pool.query(`
       SELECT 
-        posts.*,
-        users.user_type,
-        COALESCE(sa.first_name, om.first_name) AS first_name,
-        COALESCE(sa.last_name, om.last_name) AS last_name,
+        posts.*, 
+        users.firstName AS "firstName", 
+        users.lastName AS "lastName", 
+        users.user_type, 
         organization.name AS organization_name
       FROM posts
       JOIN users ON posts.user_id = users.user_id
-      LEFT JOIN student_alumni sa ON users.user_id = sa.student_alumni_id
-      LEFT JOIN organization_member om ON users.user_id = om.member_id
       LEFT JOIN organization ON posts.organization_id = organization.organization_id
+      ORDER BY RANDOM()
     `);
-      res.json({ rows:result.rows });
-    } catch (error) {
-      console.error("Query error:", error);
-      res.status(500).json({ error: "Database query failed" });
 
-    }
-  });
+    res.json({ rows: result.rows });
+  } catch (error) {
+    console.error("Query error:", error.message, error.stack);
+    res.status(500).json({ error: "Database query failed" });
+  }
+});
 
 
-  //get a post from the database based on the post_id. need to add to get the post based on "like" for the search function
-postRouter.get("/getpost", async (req, res) => {
+
+
+  //get post by id- for home page user side bar
+  postRouter.get("/getPostByID", async (req, res) => {
     try {
-      var id1=req.query.post_id;
-      console.log(id1);
-      const result = await pool.query("select * from posts where post_id="+id1);
-      console.log(result);
-      res.json({rows:result.rows});
-     
+      const id = req.query.post_id;
+      console.log("Fetching post ID:", id);
+  
+      const query = `
+  SELECT posts.*, 
+         u.firstName AS "firstName", 
+         u.lastName AS "lastName", 
+         u.user_type, 
+         org.name AS organization_name
+  FROM posts
+  JOIN users u ON posts.user_id = u.user_id
+  LEFT JOIN organization org ON posts.organization_id = org.organization_id
+  WHERE posts.post_id = $1
+`;
+
+  
+      const result = await pool.query(query, [id]);
+      res.json({ rows: result.rows });
     } catch (error) {
-      console.error("Query error:", error);
-      res.status(500).json({ error: "Database query failed" });     
+      console.error("Query error:", error.message, error.stack);
+      res.status(500).json({ error: "Database query failed" });
     }
   });
+  
+
+
+//search all
+postRouter.get("/searchPosts", async (req, res) => {
+  try {
+    const searchTerm = req.query.q;
+    console.log("Search term:", searchTerm);
+
+    const query = `
+      SELECT posts.*, 
+             u.firstName AS "firstName", 
+             u.lastName AS "lastName", 
+             u.user_type, 
+             org.name AS organization_name
+      FROM posts
+      JOIN users u ON posts.user_id = u.user_id
+      LEFT JOIN organization org ON posts.organization_id = org.organization_id
+      WHERE 
+        posts.content ILIKE $1 OR
+        org.name ILIKE $1 OR
+        u.firstName ILIKE $1 OR
+        u.lastName ILIKE $1
+    `;
+
+    const result = await pool.query(query, [`%${searchTerm}%`]);
+    res.json({ rows: result.rows });
+  } catch (error) {
+    console.error("Query error:", error.message, error.stack);
+    res.status(500).json({ error: "Database query failed" });
+  }
+});
+
+
+  
+
 
 
   //delete a post based on id. stuAlu can only delete their own posts. org members who are admin can delete org posts
