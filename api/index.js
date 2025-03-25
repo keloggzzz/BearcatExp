@@ -10,7 +10,8 @@ import stuAluRouter from "./routes/StudAlumRoutes.js";
 import userRouter from "./routes/UserRoutes.js";
 
 const app=express();
-const allowedOrigins = ["http://localhost:5173"]; // frontend port
+const allowedOrigins = ["http://localhost:5173"]; // frontend port //var host="https://bearcat-exp.vercel.app";
+
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -27,6 +28,7 @@ app.use("/user", userRouter);
     try {
      
           res.send("Bearcat Board Express Server");
+
      
     } catch (error) {
       console.error("Query error:", error);
