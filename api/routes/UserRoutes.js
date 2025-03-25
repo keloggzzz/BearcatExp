@@ -72,6 +72,29 @@ userRouter.get("/users", async (req, res) => {
     }
   })
 
+  userRouter.post("/register", async (req,res)=>{
+    try {
+      const { firstName, lastName, email, password, city, user_type } = req.body;
+
+      // Check if the email is already in use
+      const existingUser = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ success: false, message: "Email already registered" });
+      }
+
+    // Insert user into the database
+      const result = await pool.query(
+        "INSERT INTO users (firstname, lastname, email, password, city, user_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+        [firstName, lastName, email, password, city, user_type]
+      );
+
+      res.status(201).json({ success: true, user: result.rows[0] });
+    }catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
 
 
 // change from books to users....
