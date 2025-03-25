@@ -45,34 +45,4 @@ stuAluRouter.get("/getStuAlu", async (req, res) => {
     }
   })
 
-
-
-// change from books to stuAlu....also, how to add a post auto linking it to the user's id from login...and should the picture
-//be in this table or the user itself?
-
-//   stuAluRouter.get("/addpost", async (req, res) => {
-//     try {
-
-//         var title="Coding Journal";
-//         var author="Jimmy John";
-//         var price=90.98;
-//         var catid=5;
-//         var qry="Insert into books (title, author, price, category_id) VALUES ("
-//         + "'"+title+"',"
-//         + "'"+author+"',"
-//         +price+","
-//         +catid+")";
-
-//         console.log(qry);
-
-//       const result = await pool.query(qry);
-//       console.log(result);
-//       res.json({ans: 1});
-     
-//     } catch (error) {
-//       console.error("Query error:", error);
-//       res.status(500).json({ error: "Database query failed" });     
-//     }
-//   });
-
 export default stuAluRouter;

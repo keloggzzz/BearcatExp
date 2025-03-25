@@ -44,33 +44,4 @@ orgMemberRouter.get("/getOrgMember", async (req, res) => {
     }
   })
 
-
-
-// change from books to organization_member....also, how to add a member having validated that the person is a member of a current org.
-
-//   orgMemberRouter.get("/addpost", async (req, res) => {
-//     try {
-
-//         var title="Coding Journal";
-//         var author="Jimmy John";
-//         var price=90.98;
-//         var catid=5;
-//         var qry="Insert into books (title, author, price, category_id) VALUES ("
-//         + "'"+title+"',"
-//         + "'"+author+"',"
-//         +price+","
-//         +catid+")";
-
-//         console.log(qry);
-
-//       const result = await pool.query(qry);
-//       console.log(result);
-//       res.json({ans: 1});
-     
-//     } catch (error) {
-//       console.error("Query error:", error);
-//       res.status(500).json({ error: "Database query failed" });     
-//     }
-//   });
-
 export default orgMemberRouter;
