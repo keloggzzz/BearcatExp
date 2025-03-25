@@ -104,11 +104,13 @@ userRouter.post("/register", async (req, res) => {
       [firstName, lastName, email, password, city, user_type]
     );
 
-    res.status(201).json({ success: true, user: result.rows[0] });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
+      res.status(201).json({ success: true, user: result.rows[0] });
+    }catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+
+      console.log(req.body);
+    }
 });
 
 export default userRouter;
