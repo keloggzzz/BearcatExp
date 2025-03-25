@@ -72,6 +72,8 @@ userRouter.get("/users", async (req, res) => {
     }
   })
 
+
+  //register new user
   userRouter.post("/register", async (req,res)=>{
     try {
       const { firstName, lastName, email, password, city, user_type } = req.body;
@@ -94,34 +96,5 @@ userRouter.get("/users", async (req, res) => {
       res.status(500).json({ success: false, message: "Server error" });
     }
 });
-
-
-
-// change from books to users....
-
-//   userRouter.get("/addpost", async (req, res) => {
-//     try {
-
-//         var title="Coding Journal";
-//         var author="Jimmy John";
-//         var price=90.98;
-//         var catid=5;
-//         var qry="Insert into books (title, author, price, category_id) VALUES ("
-//         + "'"+title+"',"
-//         + "'"+author+"',"
-//         +price+","
-//         +catid+")";
-
-//         console.log(qry);
-
-//       const result = await pool.query(qry);
-//       console.log(result);
-//       res.json({ans: 1});
-     
-//     } catch (error) {
-//       console.error("Query error:", error);
-//       res.status(500).json({ error: "Database query failed" });     
-//     }
-//   });
 
 export default userRouter;
