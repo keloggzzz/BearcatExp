@@ -42,7 +42,7 @@ orgRouter.get("/getOrg", async (req, res) => {
       console.error("Query error: ", error);
       res.json({ans: 0});
     }
-  })
+  });
 
 
 
