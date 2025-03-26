@@ -26,7 +26,7 @@ userRouter.post("/login", async (req, res) => {
 });
 
 //get all users in the database
-userRouter.get("/users", async (req, res) => {
+userRouter.get("/allUsers", async (req, res) => {
   try {
     const result = await pool.query("SELECT * from users");
     res.json({ rows: result.rows });
@@ -112,7 +112,7 @@ userRouter.post("/register", async (req, res) => {
         organization_id = insertOrgResult.rows[0].organization_id;
         console.log("Organization created, new organization_id:", organization_id); // Debugging log
       }
-      
+
     }
 
     // Insert user into the users table

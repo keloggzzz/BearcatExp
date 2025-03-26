@@ -107,33 +107,31 @@ postRouter.get("/searchPosts", async (req, res) => {
     }
   });
 
+  postRouter.get("/getUserPosts", async (req, res) => {
+    const { user_id } = req.query;  // Get the user_id from query parameters
+    
+    if (!user_id) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+  
+    try {
+      const query = `
+        SELECT * FROM posts WHERE user_id = $1 ORDER BY created_at DESC;
+      `;
+  
+      // Execute the query with the user_id parameter
+      const { rows } = await pool.query(query, [user_id]);
+  
+      if (rows.length === 0) {
+        return res.status(404).json({ message: "No posts found for this user" });
+      }
+  
+      // Send the posts as the response
+      res.json({ posts: rows });
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
-
-// change from books to posts....also, how to add a post auto linking it to the user's id from login...
-
-//   postRouter.get("/addpost", async (req, res) => {
-//     try {
-
-//         var title="Coding Journal";
-//         var author="Jimmy John";
-//         var price=90.98;
-//         var catid=5;
-//         var qry="Insert into books (title, author, price, category_id) VALUES ("
-//         + "'"+title+"',"
-//         + "'"+author+"',"
-//         +price+","
-//         +catid+")";
-
-//         console.log(qry);
-
-//       const result = await pool.query(qry);
-//       console.log(result);
-//       res.json({ans: 1});
-     
-//     } catch (error) {
-//       console.error("Query error:", error);
-//       res.status(500).json({ error: "Database query failed" });     
-//     }
-//   });
-
-export default postRouter;
+  export default postRouter;
