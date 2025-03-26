@@ -96,10 +96,11 @@ userRouter.post("/register", async (req, res) => {
             )
             INSERT INTO organization_member (member_id, role, organization_id)
             SELECT id FROM new_user, 
-            $8, 
+            'member', 
             SELECT id FROM new_org
             RETURNING member_id
-          `);
+          `,
+        [firstName, lastName, email, password, city, user_type, companyName]);
       } else {
         return res.status(400).json({ success: false, message: "You must provide a company name" });
       }
@@ -109,7 +110,9 @@ userRouter.post("/register", async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (email) DO NOTHING
         RETURNING id
-      `);
+      `,
+      [firstName, lastName, email, password, city, user_type]
+      );
     }
 
     if (user === undefined) {
