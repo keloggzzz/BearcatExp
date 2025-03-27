@@ -25,7 +25,9 @@ userRouter.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
     
-    res.json({ success: true, user: result });
+    console.log(result);
+
+    res.json({ success: true, user: result.rows[0] });
     
   } catch (error) {
     console.error("Login query error:", error.message, error.stack);

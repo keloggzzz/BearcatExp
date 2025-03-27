@@ -8,6 +8,7 @@ import orgMemberRouter from "./routes/OrgMemberRoutes.js";
 import orgRouter from "./routes/OrgRoutes.js";
 import stuAluRouter from "./routes/StudAlumRoutes.js";
 import userRouter from "./routes/UserRoutes.js";
+import authRouter from "./routes/AuthRoutes.js";
 
 const app=express();
 const allowedOrigins = ["http://localhost:5173"]; // frontend port //var host="https://bearcat-exp.vercel.app";
@@ -22,6 +23,7 @@ app.use("/orgMember", orgMemberRouter);
 app.use("/org", orgRouter);
 app.use("/stuAlu", stuAluRouter);
 app.use("/user", userRouter);
+app.use("/auth", authRouter);
 
 
  app.get("/", async (req, res) => {
