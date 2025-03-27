@@ -1,12 +1,11 @@
 import express from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 const userRouter = express.Router();
 import pool from "./PoolConnection.js";
 
 
 //login user
 userRouter.post("/login", async (req, res) => {
-
 
   const { email, password } = req.body;
 
@@ -25,8 +24,23 @@ userRouter.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
     
-    console.log(result);
+    // const accessToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" });
 
+    // let refreshToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" })
+
+    // await pool.query(
+    //   "INSERT INTO user_sessions (user_id, refresh_token) VALUES ($1, $2)",
+    //   [user.rows[0].user_id, refreshToken]
+    // );
+
+    // res.cookie("refresh_token", refreshToken, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production", // Only send over HTTPS
+    //   sameSite: "Strict",
+    //   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    // });
+
+    // res.json({ success: true, user: result.rows[0], accessToken });
     res.json({ success: true, user: result.rows[0] });
     
   } catch (error) {

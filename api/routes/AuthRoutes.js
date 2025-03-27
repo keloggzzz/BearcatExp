@@ -1,5 +1,5 @@
 import express from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 const authRouter = express.Router();
 import pool from "./PoolConnection.js";
 
@@ -20,7 +20,7 @@ authRouter.post("/refreshtoken", async (req, res) => {
         if (!session.rows.length) return res.statusCode(403).json({ error: "Invalid refresh token "});
 
         // Makes new access token
-        const newAccessToken = jwt.sign({ user_id: decoded.user_id, firstname: decoded.firstname, role: decoded.user_type, pic: user_picture, auth: "authenticated" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        const newAccessToken = jwt.sign({ user_id: decoded.user_id, firstname: decoded.firstname, type: decoded.user_type, pic: user_picture, role: "authenticated" }, process.env.JWT_SECRET, { expiresIn: "1h" });
         await pool.query(
             "UPDATE user_sessions SET refresh_token $1 WHERE id = $2"
             [refreshToken, session.rows[0].id]
