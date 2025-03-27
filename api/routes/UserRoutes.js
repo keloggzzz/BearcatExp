@@ -1,8 +1,10 @@
 import express from "express";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 const userRouter = express.Router();
 import pool from "./PoolConnection.js";
 
+const JWT_SECRET = process.env.JWT_SECRET;
 
 //login user
 userRouter.post("/login", async (req, res) => {
@@ -24,24 +26,23 @@ userRouter.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
     
-    // const accessToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" });
+    const accessToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" }, JWT_SECRET, { expiresIn: "1h" });
 
-    // let refreshToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" })
+    let refreshToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" }, process.env.REFRESH_SECRET, { expiresIn: "30d" })
 
-    // await pool.query(
-    //   "INSERT INTO user_sessions (user_id, refresh_token) VALUES ($1, $2)",
-    //   [user.rows[0].user_id, refreshToken]
-    // );
+    //await pool.query(
+    //  "INSERT INTO user_sessions (user_id, refresh_token) VALUES ($1, $2)",
+    //  [result.rows[0].user_id, refreshToken]
+    //);
 
-    // res.cookie("refresh_token", refreshToken, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === "production", // Only send over HTTPS
-    //   sameSite: "Strict",
-    //   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    // });
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Only send over HTTPS
+      sameSite: "Strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
 
-    // res.json({ success: true, user: result.rows[0], accessToken });
-    res.json({ success: true, user: result.rows[0] });
+    res.json({ success: true, user: result.rows[0], accessToken });
     
   } catch (error) {
     console.error("Login query error:", error.message, error.stack);
@@ -147,7 +148,7 @@ userRouter.post("/register", async (req, res) => {
       const user = await pool.query(`
         INSERT INTO users (firstname, lastname, email, password, city, user_type)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id
+        RETURNING user_id
       `,
       [firstName, lastName, email, hashedPassword, city, user_type]
       );
