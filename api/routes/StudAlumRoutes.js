@@ -14,7 +14,6 @@ stuAluRouter.get("/stuAlus", async (req, res) => {
     }
   });
 
-
   //get stuAlu from the database based on id. need to make it to where you can get it on name also. maybe part of search function(not just posts but ppl too)
 stuAluRouter.get("/getStuAlu", async (req, res) => {
     try {
@@ -30,6 +29,8 @@ stuAluRouter.get("/getStuAlu", async (req, res) => {
     }
   });
 
+
+
   //delete a stuAlu. this should only be allowed to delete their own profile
   stuAluRouter.get("/delStuAlu", async (req, res)=> {
     try{
@@ -43,6 +44,28 @@ stuAluRouter.get("/getStuAlu", async (req, res) => {
       console.error("Query error: ", error);
       res.json({ans: 0});
     }
-  })
+  });
+
+  stuAluRouter.put("/updateStuAlu", async (req, res) => {
+    const {
+      student_alumni_id,
+      bio,
+      graduation_year,
+      major,
+      experience
+    } = req.body;
+
+    try{
+      const result = await pool.query(
+        "UPDATE student_alumni SET bio = $1, graduation_year = $2, major = $3, experience = $4 WHERE student_alumni_id = $5",
+        [bio, graduation_year, major, experience, student_alumni_id]
+      );
+      res.json({updated: result.rows[0]});
+    }
+    catch (error){
+      console.alert("Update Student Alumni Error");
+      res.status(500).json({ error: "Update Student Alumni failed" });
+    }
+  });
 
 export default stuAluRouter;
