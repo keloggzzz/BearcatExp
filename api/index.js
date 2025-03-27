@@ -18,12 +18,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: allowedOrigins,
   credentials: true, // 🔥 This allows cookies, auth headers, etc.
-}));app.use("/post", postRouter);
+}));
+app.use("/post", postRouter);
 app.use("/orgMember", orgMemberRouter);
 app.use("/org", orgRouter);
 app.use("/stuAlu", stuAluRouter);
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
+
 
 
  app.get("/", async (req, res) => {

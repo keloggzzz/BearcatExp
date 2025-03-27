@@ -31,7 +31,7 @@ orgMemberRouter.get("/getOrgMember", async (req, res) => {
 
   //Upate org member based on id.
 
-  orgMemberRouter.get("/updateOrgMember", async (req, res) => {
+  orgMemberRouter.put("/updateOrgMember", async (req, res) => {
     const {member_id, organization_id, user_id, role} = req.body;
     try {
       const result = await pool.query(
@@ -41,13 +41,13 @@ orgMemberRouter.get("/getOrgMember", async (req, res) => {
       );
       res.json({updated: result.rows[0]});
     } catch (error){
-      console.alert("Update organization member error: ", error);
+      console.error("Update organization member error: ", error);
       res.status(500).json({ error: "Update organization member failed" });
     }
     });
 
   //delete organization member based on id. 
-  orgMemberRouter.get("/delOrgMember", async (req, res)=> {
+  orgMemberRouter.delete("/delOrgMember", async (req, res)=> {
     try{
       var id1= req.query.member_id;
       console.log(id1);

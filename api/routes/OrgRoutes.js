@@ -30,17 +30,20 @@ orgRouter.get("/getOrg", async (req, res) => {
   });
 
   //delete an organization. this should only be allowed by admins of the org_members...need to add more functionality for this
-  orgRouter.get("/delOrg", async (req, res)=> {
+  orgRouter.delete("/delOrg", async (req, res)=> {
     try{
       var id1= req.query.organization_id;
       console.log(id1);
-    const result = await pool.query("Delete organization from posts where organization_id = "+id1);
-    console.log(result);
-    res.json({ans: 1});
-
-    }catch(error){
+    const result = await pool.query("DELETE FROM organization WHERE organization_id = "+id1);
+    //Checks if anything actually got deleted
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Organization not found" });
+    }
+      console.log(result);
+      res.json({ message: "Organization deleted successfully" });
+    } catch (error) {
       console.error("Query error: ", error);
-      res.json({ans: 0});
+      res.status(500).json({ error: "Database query failed" });
     }
   });
 

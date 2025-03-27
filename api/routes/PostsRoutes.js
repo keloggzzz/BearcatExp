@@ -2,6 +2,22 @@ import express from "express";
 const postRouter = express.Router();
 import pool from "./PoolConnection.js";
 
+
+import multer from "multer";
+
+// Setup storage for uploaded images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploadedImages/");
+  },
+  filename: (req, file, cb) => {
+    console.log(file)
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
 //get all posts in the database
 postRouter.get("/posts", async (req, res) => {
   try {
@@ -87,23 +103,45 @@ postRouter.get("/searchPosts", async (req, res) => {
   }
 });
 
+postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
+  console.log("Add Post API called!");
+  try {
+      const {user_id, content, post_type, organization_id, title} = req.body;
+      console.log({post_type});
+      const postimg = req.file ? req.file.filename : null; // Handle image
+
+      const query = `
+        INSERT INTO posts (user_id, content, post_type, organization_id, title, postimg, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        RETURNING *;
+    `;
+
+    const { rows } = await pool.query(query, [user_id, content, post_type, organization_id, title, postimg]);
+
+    res.status(201).json({ success: true, message: "User registered successfully", post: rows[0] });
+  } catch (error) {
+      console.error("Query error:", error);
+      res.status(500).json({ error: "Database query failed" });
+  }
+});
 
   
 
 
 
   //delete a post based on id. stuAlu can only delete their own posts. org members who are admin can delete org posts
-  postRouter.get("/delpost", async (req, res)=> {
+  postRouter.delete("/delpost", async (req, res)=> {
     try{
-      var id1= req.query.post_id;
-      console.log(id1);
-    const result = await pool.query("Delete post from posts where post_id = "+id1);
-    console.log(result);
-    res.json({ans: 1});
+      const { post_id } = req.body;  // Use req.body to get the post_id, more common for delete methods
+        console.log("Deleting Post ID: ", post_id);
+
+        const result = await pool.query("Delete post from posts where post_id = "+post_id);
+        console.log(result);
+        res.json({ans: "Success"});
 
     }catch(error){
       console.error("Query error: ", error);
-      res.json({ans: 0});
+      res.json({ans: "Failure"});
     }
   });
 
