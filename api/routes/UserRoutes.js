@@ -152,11 +152,18 @@ userRouter.post("/register", async (req, res) => {
       [firstName, lastName, email, hashedPassword, city, user_type]
       );
     }
+    res.status(201).json({ success: true, message: "User registered successfully" });
 
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // Check if error is a duplicate email issue
+    if (error.code === '23505') { // PostgreSQL unique violation error code
+        return res.status(409).json({ success: false, message: "Email already in use. Try another one." });
+    }
+
     res.status(500).json({ success: false, message: "Server error (is your email already in use?)" });
-  }
+}
 });
 
 export default userRouter;
