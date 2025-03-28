@@ -27,6 +27,7 @@ postRouter.get("/posts", async (req, res) => {
         users.firstName AS "firstName", 
         users.lastName AS "lastName", 
         users.user_type, 
+        users.picture, 
         organization.name AS organization_name
       FROM posts
       JOIN users ON posts.user_id = users.user_id
@@ -130,18 +131,20 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
 
 
   //delete a post based on id. stuAlu can only delete their own posts. org members who are admin can delete org posts
-  postRouter.delete("/delpost", async (req, res)=> {
-    try{
-      const { post_id } = req.body;  // Use req.body to get the post_id, more common for delete methods
-        console.log("Deleting Post ID: ", post_id);
+  postRouter.delete("/delPost", async (req, res) => {
+    console.log("Del Post API called!");
+    try {
+      const { post_id, user_id } = req.body; // Get post_id and user_id from the body
+  
+      const result = await pool.query("DELETE FROM posts WHERE post_id = $1 AND user_id = $2", [post_id, user_id]);
+      console.log(result); // Check if the query was successful
 
-        const result = await pool.query("Delete post from posts where post_id = "+post_id);
-        console.log(result);
-        res.json({ans: "Success"});
-
-    }catch(error){
+      res.status(200).json({ ans: "Success", message: "User registered successfully"});
+  
+  
+    } catch (error) {
       console.error("Query error: ", error);
-      res.json({ans: "Failure"});
+      res.status(500).json({ error: "Database query failed" });
     }
   });
 
@@ -170,6 +173,34 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
       console.error("Error fetching posts:", error);
       res.status(500).json({ error: "Internal server error" });
     }
+  });
+
+  postRouter.post("/updatePost", upload.single("postimg"), async (req, res) => {
+    console.log("Update Post API called!");
+      try {
+          var post = req.body;
+          var post_id = post.post_id;
+          var user_id = post.user_id;
+          var content = post.content;
+          var title = post.title;
+          var postimg = req.file ? req.file.filename : post.existingImage; // If no new image, keep the old one
+
+          var qry = `
+              UPDATE posts 
+              SET content = '${content}', title = '${title}', postimg = '${postimg}'
+              WHERE post_id = ${post_id} AND user_id = ${user_id};
+          `;
+
+          console.log(qry);
+          const result = await pool.query(qry);
+
+          console.log(result);
+          res.json({ ans: 1 });
+
+      } catch (error) {
+          console.error("Query error:", error);
+          res.json({ ans: 0 });
+      }
   });
 
   export default postRouter;
