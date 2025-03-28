@@ -4,6 +4,21 @@ import jwt from "jsonwebtoken";
 const userRouter = express.Router();
 import pool from "./PoolConnection.js";
 
+import multer from "multer";
+
+// Setup storage for uploaded images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploadedImages/");
+  },
+  filename: (req, file, cb) => {
+    console.log(file)
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 //login user
@@ -165,6 +180,55 @@ userRouter.post("/register", async (req, res) => {
 
     res.status(500).json({ success: false, message: "Server error (is your email already in use?)" });
 }
+});
+
+userRouter.put("/updateProfileInfo", upload.single("profPic"), async (req, res) => {
+  console.log("Update Profile Info API called!");
+  try {
+    // Retrieve the updated information from the request body
+    const info = req.body;  // No need to wrap this inside another object
+    const user_id = info.user_id;
+    const bio = info.bio;
+    const major = info.major;
+    const experience = info.experience;
+    const graduation_year = info.graduation_year;
+
+
+    console.log("User ID from request:",user_id);
+    console.log(info)
+
+    // Construct the SQL query to update the user information
+    const qry = `
+      UPDATE student_alumni
+      SET bio = $1,
+          graduation_year = $2,
+          major = $3,
+          experience = $4
+      WHERE student_alumni_id = $5;
+    `;
+
+
+    // Run the query with the values
+    const result = await pool.query(qry, [
+      bio,
+      graduation_year,
+      major,
+      experience,
+      user_id
+    ]);
+
+    // If the query affects no rows, return an error message
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log(result);
+    res.json({ ans: 1 }); // Successfully updated
+
+  } catch (error) {
+    console.error("Query error:", error);
+    res.status(500).json({ error: "Database query failed" });
+  }
 });
 
 export default userRouter;

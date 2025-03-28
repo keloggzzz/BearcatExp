@@ -175,7 +175,7 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
     }
   });
 
-  postRouter.post("/updatePost", upload.single("postimg"), async (req, res) => {
+  postRouter.put("/updatePost", upload.single("postimg"), async (req, res) => {
     console.log("Update Post API called!");
       try {
           var post = req.body;
