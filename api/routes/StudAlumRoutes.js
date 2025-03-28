@@ -63,7 +63,7 @@ stuAluRouter.get("/getStuAlu", async (req, res) => {
       res.json({updated: result.rows[0]});
     }
     catch (error){
-      console.alert("Update Student Alumni Error");
+      alert("Update Student Alumni Error");
       res.status(500).json({ error: "Update Student Alumni failed" });
     }
   });

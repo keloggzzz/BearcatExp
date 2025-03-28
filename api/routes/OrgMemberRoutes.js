@@ -42,6 +42,7 @@ orgMemberRouter.get("/getOrgMember", async (req, res) => {
       res.json({updated: result.rows[0]});
     } catch (error){
       console.error("Update organization member error: ", error);
+      alert("Update organization member failed. Please try again.")
       res.status(500).json({ error: "Update organization member failed" });
     }
     });
