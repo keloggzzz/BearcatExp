@@ -45,7 +45,7 @@ postRouter.get("/posts", async (req, res) => {
 
 
 
-  //get post by id- for home page user side bar
+  //get post by id
   postRouter.get("/getPostByID", async (req, res) => {
     try {
       const id = req.query.post_id;
@@ -74,7 +74,7 @@ postRouter.get("/posts", async (req, res) => {
   
 
 
-//search all
+//search all posts in the database
 postRouter.get("/searchPosts", async (req, res) => {
   try {
     const searchTerm = req.query.q;
@@ -104,6 +104,8 @@ postRouter.get("/searchPosts", async (req, res) => {
   }
 });
 
+
+//add a new post
 postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
   console.log("Add Post API called!");
   try {
@@ -126,11 +128,11 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
   }
 });
 
-  
 
 
-
-  //delete a post based on id. stuAlu can only delete their own posts. org members who are admin can delete org posts
+  //delete a post based on id. 
+  //student and Alumni only delete their own posts. 
+  //org members who are admin can delete org posts; o/w org members only delete their own posts
   postRouter.delete("/delPost", async (req, res) => {
     console.log("Del Post API called!");
     try {

@@ -38,7 +38,7 @@ userRouter.post("/login", async (req, res) => {
 		
     if (!isValidPassword) {
       console.log("PASSWORD NOT VALID")
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
     
     const accessToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" }, JWT_SECRET, { expiresIn: "1h" });
@@ -89,7 +89,8 @@ userRouter.get("/getuser", async (req, res) => {
         sa.major, 
         sa.bio, 
         sa.experience,
-        o.name AS organization_name
+        o.name AS organization_name,
+        o.description AS organization_description
       FROM users u
       LEFT JOIN student_alumni sa 
         ON u.user_id = sa.student_alumni_id
@@ -230,5 +231,25 @@ userRouter.put("/updateProfileInfo", upload.single("profPic"), async (req, res) 
     res.status(500).json({ error: "Database query failed" });
   }
 });
+
+
+// Delete a user
+userRouter.delete("/delUser", async (req, res) => {
+  try {
+    const { userId } = req.body; 
+
+    const result = await pool.query("DELETE FROM users WHERE user_id = $1", [userId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    console.error("User deletion error:", error);
+    res.status(500).json({ error: "Database query failed" });
+  }
+});
+
 
 export default userRouter;

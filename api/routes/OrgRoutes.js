@@ -46,5 +46,50 @@ orgRouter.get("/getOrg", async (req, res) => {
       res.status(500).json({ error: "Database query failed" });
     }
   });
+  // Create a new organization
+
+orgRouter.post("/createOrg", async (req, res) => {
+  const { name } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO organization (name)
+       VALUES ($1)
+       ON CONFLICT (name) DO NOTHING
+       RETURNING *`,
+      [name]
+    );
+
+    // If org was not inserted (already exists), fetch the existing one
+    if (result.rows.length === 0) {
+      const existing = await pool.query(
+        "SELECT * FROM organization WHERE name = $1", [name]
+      );
+      return res.json(existing.rows[0]);
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Org creation failed:", err);
+    res.status(500).json({ error: "Organization creation failed" });
+  }
+});
+
+
+//update organization
+orgRouter.put("/updateOrg", async (req, res) => {
+  const { organization_id, name, description } = req.body;
+  try {
+    const result = await pool.query(
+      "UPDATE organization SET name = $1, description = $2 WHERE organization_id = $3 RETURNING *",
+      [name, description, organization_id]
+    );
+    res.json({ success: true, org: result.rows[0] });
+  } catch (error) {
+    console.error("Error updating organization:", error);
+    res.status(500).json({ success: false, message: "Update failed" });
+  }
+});
+
+
 
 export default orgRouter;
