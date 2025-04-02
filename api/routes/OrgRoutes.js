@@ -15,19 +15,27 @@ orgRouter.get("/orgs", async (req, res) => {
   });
 
   //get one organization from the database based on organization id. also need to make one to find based on name
-orgRouter.get("/getOrg", async (req, res) => {
+  orgRouter.get("/getOrg", async (req, res) => {
     try {
-      var id1=req.query.organization_id;
-      console.log(id1);
-      const result = await pool.query("select * from organization where organization_id="+id1);
-      console.log(result);
-      res.json({rows:result.rows});
-     
+      const id1 = req.query.organization_id;
+  
+      if (!id1) {
+        return res.status(400).json({ error: "Missing organization_id" });
+      }
+  
+      const result = await pool.query("SELECT * FROM organization WHERE organization_id = $1", [id1]);
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+  
+      res.json({ rows: result.rows });
     } catch (error) {
       console.error("Query error:", error);
-      res.status(500).json({ error: "Database query failed" });     
+      res.status(500).json({ error: "Database query failed" });
     }
   });
+  
 
   //delete an organization. this should only be allowed by admins of the org_members...need to add more functionality for this
   orgRouter.delete("/delOrg", async (req, res)=> {

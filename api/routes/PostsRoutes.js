@@ -205,4 +205,32 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
       }
   });
 
+
+  //get posts by organization id
+  postRouter.get("/getPostsByOrg", async (req, res) => {
+    const { organization_id } = req.query;
+  
+    try {
+      const result = await pool.query(
+        `SELECT 
+          p.*, 
+          u.firstname AS "firstName", 
+          u.lastname AS "lastName", 
+          u.picture,
+          o.name AS organization_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.user_id
+        LEFT JOIN organization o ON p.organization_id = o.organization_id
+        WHERE p.organization_id = $1
+        ORDER BY p.post_id DESC`,
+        [organization_id]
+      );
+  
+      res.json({ posts: result.rows });
+    } catch (error) {
+      console.error("Error fetching posts by org:", error);
+      res.status(500).json({ error: "Server error while fetching org posts" });
+    }
+  });
+  
   export default postRouter;

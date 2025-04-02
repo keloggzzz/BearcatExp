@@ -35,12 +35,12 @@ userRouter.post("/login", async (req, res) => {
     console.log(result);
 
     const isValidPassword = await bcrypt.compare(password, result.rows[0].password);
-		
+
     if (!isValidPassword) {
       console.log("PASSWORD NOT VALID")
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    
+
     const accessToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" }, JWT_SECRET, { expiresIn: "1h" });
 
     let refreshToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" }, process.env.REFRESH_SECRET, { expiresIn: "30d" })
@@ -58,7 +58,7 @@ userRouter.post("/login", async (req, res) => {
     });
 
     res.json({ success: true, user: result.rows[0], accessToken });
-    
+
   } catch (error) {
     console.error("Login query error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
@@ -89,6 +89,7 @@ userRouter.get("/getuser", async (req, res) => {
         sa.major, 
         sa.bio, 
         sa.experience,
+         o.organization_id,
         o.name AS organization_name,
         o.description AS organization_description,
         om.role AS organization_role
@@ -101,7 +102,7 @@ userRouter.get("/getuser", async (req, res) => {
         ON om.organization_id = o.organization_id
       WHERE u.user_id = $1
     `, [id]);
-    
+
 
     res.json({ rows: result.rows });
 
@@ -123,7 +124,7 @@ userRouter.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Checks if user is registering with an organization
-    if (user_type === "organization_member") { 
+    if (user_type === "organization_member") {
 
       // Checks to make sure a company name was input
       if (companyName) {
@@ -153,7 +154,7 @@ userRouter.post("/register", async (req, res) => {
             LEFT JOIN new_org ON TRUE
             RETURNING member_id
           `,
-        [firstName, lastName, email, hashedPassword, city, user_type, companyName]);
+          [firstName, lastName, email, hashedPassword, city, user_type, companyName]);
 
       } else {
         // This runs if no company name was provided.
@@ -167,21 +168,21 @@ userRouter.post("/register", async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING user_id
       `,
-      [firstName, lastName, email, hashedPassword, city, user_type]
+        [firstName, lastName, email, hashedPassword, city, user_type]
       );
     }
     res.status(201).json({ success: true, message: "User registered successfully" });
 
   } catch (error) {
     console.error("Registration error:", error);
-    
+
     // Check if error is a duplicate email issue
     if (error.code === '23505') { // PostgreSQL unique violation error code
-        return res.status(409).json({ success: false, message: "Email already in use. Try another one." });
+      return res.status(409).json({ success: false, message: "Email already in use. Try another one." });
     }
 
     res.status(500).json({ success: false, message: "Server error (is your email already in use?)" });
-}
+  }
 });
 
 //update profile information 
@@ -252,7 +253,7 @@ userRouter.put("/updateProfileInfo", upload.single("profPic"), async (req, res) 
 // Delete a user
 userRouter.delete("/delUser", async (req, res) => {
   try {
-    const { userId } = req.body; 
+    const { userId } = req.body;
 
     const result = await pool.query("DELETE FROM users WHERE user_id = $1", [userId]);
 

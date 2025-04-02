@@ -70,4 +70,29 @@ orgMemberRouter.get("/getOrgMember", async (req, res) => {
     }
   })
 
+  // Get all members for a specific organization
+orgMemberRouter.get("/getByOrg", async (req, res) => {
+  const { organization_id } = req.query;
+
+  if (!organization_id) {
+    return res.status(400).json({ error: "Missing organization_id" });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT u.user_id, u.firstname, u.lastname, u.picture
+       FROM users u
+       INNER JOIN organization_member om ON u.user_id = om.member_id
+       WHERE om.organization_id = $1`,
+      [organization_id]
+    );
+
+    res.json({ rows: result.rows });
+  } catch (error) {
+    console.error("Failed to fetch members by organization:", error);
+    res.status(500).json({ error: "Server error fetching org members" });
+  }
+});
+
+
 export default orgMemberRouter;
