@@ -77,7 +77,7 @@ userRouter.get("/allUsers", async (req, res) => {
   }
 });
 
-//this should only be allowed for the logged in user to access their entire profile. 
+//get  user by id
 userRouter.get("/getuser", async (req, res) => {
   try {
     const id = req.query.user_id;
@@ -90,7 +90,8 @@ userRouter.get("/getuser", async (req, res) => {
         sa.bio, 
         sa.experience,
         o.name AS organization_name,
-        o.description AS organization_description
+        o.description AS organization_description,
+        om.role AS organization_role
       FROM users u
       LEFT JOIN student_alumni sa 
         ON u.user_id = sa.student_alumni_id
@@ -183,52 +184,67 @@ userRouter.post("/register", async (req, res) => {
 }
 });
 
+//update profile information 
 userRouter.put("/updateProfileInfo", upload.single("profPic"), async (req, res) => {
   console.log("Update Profile Info API called!");
   try {
-    // Retrieve the updated information from the request body
-    const info = req.body;  // No need to wrap this inside another object
+    const info = req.body;
     const user_id = info.user_id;
-    const bio = info.bio;
-    const major = info.major;
-    const experience = info.experience;
-    const graduation_year = info.graduation_year;
 
+    if (!user_id) {
+      return res.status(400).json({ success: false, error: "Missing user_id" });
+    }
+    const currentUser = await pool.query("SELECT * FROM users WHERE user_id = $1", [user_id]);
+    if (currentUser.rowCount === 0) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    const existing = currentUser.rows[0];
 
-    console.log("User ID from request:",user_id);
-    console.log(info)
+    // Safely assign new values or fall back to current ones
+    const firstname = info.firstname || existing.firstname;
+    const lastname = info.lastname || existing.lastname;
+    const city = info.city || existing.city;
 
-    // Construct the SQL query to update the user information
-    const qry = `
-      UPDATE student_alumni
-      SET bio = $1,
-          graduation_year = $2,
-          major = $3,
-          experience = $4
-      WHERE student_alumni_id = $5;
+    const userUpdateQuery = `
+      UPDATE users
+      SET firstname = $1,
+          lastname = $2,
+          city = $3
+      WHERE user_id = $4
     `;
 
-
-    // Run the query with the values
-    const result = await pool.query(qry, [
-      bio,
-      graduation_year,
-      major,
-      experience,
+    await pool.query(userUpdateQuery, [
+      firstname,
+      lastname,
+      city,
       user_id
     ]);
 
-    // If the query affects no rows, return an error message
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "User not found" });
+    // Optional: only update student_alumni fields if present
+    if (info.bio || info.major || info.experience || info.graduation_year) {
+      await pool.query(
+        `UPDATE student_alumni
+         SET
+           bio = COALESCE($1, bio),
+           graduation_year = COALESCE($2, graduation_year),
+           major = COALESCE($3, major),
+           experience = COALESCE($4, experience)
+         WHERE student_alumni_id = $5`,
+        [
+          info.bio ?? null,
+          info.graduation_year ?? null,
+          info.major ?? null,
+          info.experience ?? null,
+          user_id
+        ]
+      );
     }
 
-    console.log(result);
-    res.json({ ans: 1 }); // Successfully updated
+    res.json({ success: true, message: "Profile updated successfully" });
 
   } catch (error) {
-    console.error("Query error:", error);
-    res.status(500).json({ error: "Database query failed" });
+    console.error("Update Profile Info Error:", error);
+    res.status(500).json({ success: false, error: "Server error during update" });
   }
 });
 
@@ -248,6 +264,40 @@ userRouter.delete("/delUser", async (req, res) => {
   } catch (error) {
     console.error("User deletion error:", error);
     res.status(500).json({ error: "Database query failed" });
+  }
+});
+
+//update email and password only
+userRouter.put("/updateCredentials", async (req, res) => {
+  const { user_id, email, oldPassword, newPassword } = req.body;
+
+  try {
+    const result = await pool.query("SELECT password FROM users WHERE user_id = $1", [user_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const currentHashedPassword = result.rows[0].password;
+    const isMatch = await bcrypt.compare(oldPassword, currentHashedPassword);
+    console.log("bcrypt isMatch result:", isMatch);  // 🔍 <== ADD THIS LINE
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Incorrect old password" });
+    }
+
+    // If password matched, hash new password and update it
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      "UPDATE users SET password = $1, email = $2 WHERE user_id = $3",
+      [newHashedPassword, email, user_id]
+    );
+
+    res.json({ success: true, message: "Credentials updated successfully" });
+
+  } catch (err) {
+    console.error("Update credentials error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
