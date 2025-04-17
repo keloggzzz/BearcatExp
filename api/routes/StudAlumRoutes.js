@@ -52,18 +52,31 @@ stuAluRouter.get("/getStuAlu", async (req, res) => {
       bio,
       graduation_year,
       major,
-      experience
+      experience,
+      picture,
+      user_id
     } = req.body;
+
+    console.log(req.body) //debug
 
     try{
       const result = await pool.query(
         "UPDATE student_alumni SET bio = $1, graduation_year = $2, major = $3, experience = $4 WHERE student_alumni_id = $5",
         [bio, graduation_year, major, experience, student_alumni_id]
       );
+
+      // Update picture in users table
+    if (picture && user_id) {
+      await pool.query(
+        "UPDATE users SET picture = $1 WHERE user_id = $2",
+        [picture, user_id]
+      );
+    }
+
       res.json({ success: true, message: "Student/Alumni updated" });
     }
     catch (error){
-      alert("Update Student Alumni Error");
+      console.error("Update Student Alumni Error");
       res.status(500).json({ error: "Update Student Alumni failed" });
     }
   });
