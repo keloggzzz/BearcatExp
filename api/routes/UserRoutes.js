@@ -68,14 +68,27 @@ userRouter.post("/login", async (req, res) => {
 //get all users in the database
 userRouter.get("/allUsers", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * from users");
+    const result = await pool.query(`
+      SELECT 
+        u.user_id,
+        u.firstname,
+        u.lastname,
+        u.email,
+        u.city,
+        u.picture,
+        u.user_type,
+        o.name AS organization_name
+      FROM users u
+      LEFT JOIN organization_member om ON u.user_id = om.member_id
+      LEFT JOIN organization o ON om.organization_id = o.organization_id
+    `);
     res.json({ rows: result.rows });
   } catch (error) {
     console.error("Query error:", error);
     res.status(500).json({ error: "Database query failed" });
-
   }
 });
+
 
 //get  user by id
 userRouter.get("/getuser", async (req, res) => {
