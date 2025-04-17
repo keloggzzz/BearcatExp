@@ -60,12 +60,31 @@ stuAluRouter.get("/getStuAlu", async (req, res) => {
         "UPDATE student_alumni SET bio = $1, graduation_year = $2, major = $3, experience = $4 WHERE student_alumni_id = $5",
         [bio, graduation_year, major, experience, student_alumni_id]
       );
-      res.json({updated: result.rows[0]});
+      res.json({ success: true, message: "Student/Alumni updated" });
     }
     catch (error){
       alert("Update Student Alumni Error");
       res.status(500).json({ error: "Update Student Alumni failed" });
     }
   });
+
+
+  // Add a student_alumni record
+stuAluRouter.post("/addStuAlu", async (req, res) => {
+  const { student_alumni_id, bio, graduation_year, major, experience } = req.body;
+
+  try {
+    const result = await pool.query(`
+      INSERT INTO student_alumni (student_alumni_id, bio, graduation_year, major, experience)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [student_alumni_id, bio, graduation_year, major, experience]);
+
+    res.status(201).json({ success: true, student: result.rows[0] });
+  } catch (error) {
+    console.error("Insert student_alumni error:", error);
+    res.status(500).json({ success: false, message: "Failed to insert student info." });
+  }
+});
 
 export default stuAluRouter;

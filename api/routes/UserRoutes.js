@@ -221,25 +221,25 @@ userRouter.put("/updateProfileInfo", upload.single("profPic"), async (req, res) 
       user_id
     ]);
 
-    // Optional: only update student_alumni fields if present
-    if (info.bio || info.major || info.experience || info.graduation_year) {
-      await pool.query(
-        `UPDATE student_alumni
-         SET
-           bio = COALESCE($1, bio),
-           graduation_year = COALESCE($2, graduation_year),
-           major = COALESCE($3, major),
-           experience = COALESCE($4, experience)
-         WHERE student_alumni_id = $5`,
-        [
-          info.bio ?? null,
-          info.graduation_year ?? null,
-          info.major ?? null,
-          info.experience ?? null,
-          user_id
-        ]
-      );
-    }
+    // // Optional: only update student_alumni fields if present
+    // if (info.bio || info.major || info.experience || info.graduation_year) {
+    //   await pool.query(
+    //     `UPDATE student_alumni
+    //      SET
+    //        bio = COALESCE($1, bio),
+    //        graduation_year = COALESCE($2, graduation_year),
+    //        major = COALESCE($3, major),
+    //        experience = COALESCE($4, experience)
+    //      WHERE student_alumni_id = $5`,
+    //     [
+    //       info.bio ?? null,
+    //       info.graduation_year ?? null,
+    //       info.major ?? null,
+    //       info.experience ?? null,
+    //       user_id
+    //     ]
+    //   );
+    // }
 
     res.json({ success: true, message: "Profile updated successfully" });
 
