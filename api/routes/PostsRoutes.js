@@ -187,6 +187,8 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
           var title = post.title;
           var postimg = post.postimg; // If no new image, keep the old one
 
+          console.log("Post Id is:" + post_id)
+
           var qry = `
               UPDATE posts 
               SET content = '${content}', title = '${title}', postimg = '${postimg}'
