@@ -28,9 +28,15 @@ userRouter.post("/login", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
+      `SELECT 
+         u.*, 
+         om.role AS organization_role 
+       FROM users u
+       LEFT JOIN organization_member om ON u.user_id = om.member_id
+       WHERE u.email = $1`,
       [email]
     );
+    
 
     console.log(result);
 
@@ -130,67 +136,71 @@ userRouter.get("/getuser", async (req, res) => {
 // Register new user
 userRouter.post("/register", async (req, res) => {
   try {
-    const { firstName, lastName, email, password, city, user_type, companyName } = req.body;
-    console.log(req.body);
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      city,
+      user_type,
+      companyName,
+      adminCode
+    } = req.body;
 
-    // Hashes the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Checks if user is registering with an organization
     if (user_type === "organization_member") {
-
-      // Checks to make sure a company name was input
-      if (companyName) {
-
-        // First, attempts to create a new user. This will cause a 500 error if there is already a user. This is expected & desired behavior.
-        // Then, attempts to create a new org if there is not one. If there is one, new_org does nothing.
-        // Then, creates the org member link. It takes the newly created user ID, then also does a check for either the new org or the ID for the org if it already existed.
-        // All that being done, it returns the newly created user's ID.
-        const user = await pool.query(`
-            WITH new_user AS (
-              INSERT INTO users (firstname, lastname, email, password, city, user_type)
-              VALUES ($1, $2, $3, $4, $5, $6)
-              RETURNING user_id
-            ),
-            new_org AS (
-              INSERT INTO organization (name)
-              VALUES ($7)
-              ON CONFLICT (name) DO NOTHING
-              RETURNING organization_id
-            )
-            INSERT INTO organization_member (member_id, role, organization_id)
-            SELECT 
-              new_user.user_id,
-              'member', 
-              COALESCE(new_org.organization_id, (SELECT organization_id FROM organization WHERE name = $7))
-            FROM new_user
-            LEFT JOIN new_org ON TRUE
-            RETURNING member_id
-          `,
-          [firstName, lastName, email, hashedPassword, city, user_type, companyName]);
-
-      } else {
-        // This runs if no company name was provided.
+      if (!companyName) {
         return res.status(400).json({ success: false, message: "You must provide a company name" });
       }
-    } else {
 
-      // To create a student user. This will cause a 500 error if there is already a user. This is expected & desired behavior.
+      const role = adminCode === "BEARCAT123" ? "admin" : "member";
+
       const user = await pool.query(`
+        WITH new_user AS (
+          INSERT INTO users (firstname, lastname, email, password, city, user_type)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING user_id
+        ),
+        new_org AS (
+          INSERT INTO organization (name)
+          VALUES ($7)
+          ON CONFLICT (name) DO NOTHING
+          RETURNING organization_id
+        )
+        INSERT INTO organization_member (member_id, role, organization_id)
+        SELECT 
+          new_user.user_id,
+          $8,
+          COALESCE(new_org.organization_id, (SELECT organization_id FROM organization WHERE name = $7))
+        FROM new_user
+        LEFT JOIN new_org ON TRUE
+        RETURNING member_id
+      `, [
+        firstName,
+        lastName,
+        email,
+        hashedPassword,
+        city,
+        user_type,
+        companyName,
+        role
+      ]);
+
+    } else {
+      await pool.query(`
         INSERT INTO users (firstname, lastname, email, password, city, user_type)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING user_id
-      `,
-        [firstName, lastName, email, hashedPassword, city, user_type]
-      );
+      `, [firstName, lastName, email, hashedPassword, city, user_type]);
     }
+
     res.status(201).json({ success: true, message: "User registered successfully" });
 
   } catch (error) {
     console.error("Registration error:", error);
 
-    // Check if error is a duplicate email issue
-    if (error.code === '23505') { // PostgreSQL unique violation error code
+    if (error.code === '23505') {
       return res.status(409).json({ success: false, message: "Email already in use. Try another one." });
     }
 
@@ -199,7 +209,7 @@ userRouter.post("/register", async (req, res) => {
 });
 
 //update profile information 
-userRouter.put("/updateProfileInfo", upload.single("profPic"), async (req, res) => {
+userRouter.put("/updateProfileInfo", async (req, res) => {
   console.log("Update Profile Info API called!");
   try {
     const info = req.body;
@@ -218,19 +228,22 @@ userRouter.put("/updateProfileInfo", upload.single("profPic"), async (req, res) 
     const firstname = info.firstname || existing.firstname;
     const lastname = info.lastname || existing.lastname;
     const city = info.city || existing.city;
+    const picture = info.picture || existing.picture;
 
     const userUpdateQuery = `
       UPDATE users
       SET firstname = $1,
           lastname = $2,
-          city = $3
-      WHERE user_id = $4
+          city = $3,
+          picture = $4
+      WHERE user_id = $5
     `;
 
     await pool.query(userUpdateQuery, [
       firstname,
       lastname,
       city,
+      picture,
       user_id
     ]);
 

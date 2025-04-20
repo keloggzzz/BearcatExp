@@ -32,7 +32,7 @@ postRouter.get("/posts", async (req, res) => {
       FROM posts
       JOIN users ON posts.user_id = users.user_id
       LEFT JOIN organization ON posts.organization_id = organization.organization_id
-      ORDER BY RANDOM()
+ORDER BY posts.created_at DESC
     `);
 
     res.json({ rows: result.rows });
@@ -166,7 +166,7 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
       const { rows } = await pool.query(query, [user_id]);
   
       if (rows.length === 0) {
-        return res.status(404).json({ message: "No posts found for this user" });
+        return res.status(200).json({ posts: rows });
       }
   
       // Send the posts as the response

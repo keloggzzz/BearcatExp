@@ -5,7 +5,7 @@ import pool from "./PoolConnection.js";
 //get all organizations in the database
 orgRouter.get("/orgs", async (req, res) => {
     try {
-      const result = await pool.query("SELECT * from organization");
+      const result = await pool.query("SELECT * from organization ORDER BY name ASC");
       res.json({ rows:result.rows });
     } catch (error) {
       console.error("Query error:", error);
@@ -85,11 +85,19 @@ orgRouter.post("/createOrg", async (req, res) => {
 
 //update organization
 orgRouter.put("/updateOrg", async (req, res) => {
-  const { organization_id, name, description } = req.body;
+  console.log("Incoming update request:", req.body);
+
+  let { organization_id, name, description } = req.body;
+  const orgId = parseInt(organization_id);
+
+  if (!orgId || !name) {
+    return res.status(400).json({ success: false, message: "Missing or invalid fields" });
+  }
+
   try {
     const result = await pool.query(
       "UPDATE organization SET name = $1, description = $2 WHERE organization_id = $3 RETURNING *",
-      [name, description, organization_id]
+      [name, description, orgId]
     );
     res.json({ success: true, org: result.rows[0] });
   } catch (error) {
@@ -97,6 +105,7 @@ orgRouter.put("/updateOrg", async (req, res) => {
     res.status(500).json({ success: false, message: "Update failed" });
   }
 });
+
 
 
 
