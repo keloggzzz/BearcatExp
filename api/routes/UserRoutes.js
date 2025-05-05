@@ -72,7 +72,7 @@ userRouter.post("/login", async (req, res) => {
     res.cookie("refresh_token", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // Only send over HTTPS
-      sameSite: "Strict",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
