@@ -11,13 +11,15 @@ import userRouter from "./routes/UserRoutes.js";
 import authRouter from "./routes/AuthRoutes.js";
 
 const app=express();
-const allowedOrigins = ["http://localhost:5173"]; // frontend port //var host="https://bearcat-exp.vercel.app";
+const allowedOrigins = ["www.bear.careers", "bear.careers", "http://localhost:5173"];
 
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: allowedOrigins,
   credentials: true, // 🔥 This allows cookies, auth headers, etc.
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use("/post", postRouter);
 app.use("/orgMember", orgMemberRouter);
