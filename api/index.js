@@ -11,7 +11,7 @@ import userRouter from "./routes/UserRoutes.js";
 import authRouter from "./routes/AuthRoutes.js";
 
 const app=express();
-const allowedOrigins = ["www.bear.careers", "bear.careers", "http://localhost:5173"];
+const allowedOrigins = ["https://www.bear.careers", "https://bear.careers", "http://localhost:5173"];
 
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
@@ -21,6 +21,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+app.options('*', cors());
+
 app.use("/post", postRouter);
 app.use("/orgMember", orgMemberRouter);
 app.use("/org", orgRouter);
