@@ -1,6 +1,20 @@
 import express from "express";
 const postRouter = express.Router();
 import pool from "./PoolConnection.js";
+import jwt from "jsonwebtoken";
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) return res.sendStatus(401); // Unauthorized
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403); // Forbidden
+        req.user = user;
+        next();
+    });
+}
 
 
 import multer from "multer";
@@ -19,7 +33,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 //get all posts in the database
-postRouter.get("/posts", async (req, res) => {
+postRouter.get("/posts", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -46,7 +60,7 @@ ORDER BY posts.created_at DESC
 
 
   //get post by id
-  postRouter.get("/getPostByID", async (req, res) => {
+  postRouter.get("/getPostByID", authenticateToken, async (req, res) => {
     try {
       const id = req.query.post_id;
       console.log("Fetching post ID:", id);
@@ -75,7 +89,7 @@ ORDER BY posts.created_at DESC
 
 
 //search all posts in the database
-postRouter.get("/searchPosts", async (req, res) => {
+postRouter.get("/searchPosts", authenticateToken, async (req, res) => {
   try {
     const searchTerm = req.query.q;
     console.log("Search term:", searchTerm);
@@ -106,10 +120,10 @@ postRouter.get("/searchPosts", async (req, res) => {
 
 
 //add a new post
-postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
+postRouter.post("/addPost", authenticateToken, upload.single("postimg"), async (req, res) => {
   console.log("Add Post API called!");
   try {
-      const {user_id, content, post_type, organization_id, title} = req.body;
+      const {content, post_type, organization_id, title} = req.body;
       console.log({post_type});
       const postimg = req.file ? req.file.filename : null; // Handle image
 
@@ -119,7 +133,7 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
         RETURNING *;
     `;
 
-    const { rows } = await pool.query(query, [user_id, content, post_type, organization_id, title, postimg]);
+    const { rows } = await pool.query(query, [req.user.user_id, content, post_type, organization_id, title, postimg]);
 
     res.status(201).json({ success: true, message: "User registered successfully", post: rows[0] });
   } catch (error) {
@@ -133,7 +147,7 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
   //delete a post based on id. 
   //student and Alumni only delete their own posts. 
   //org members who are admin can delete org posts; o/w org members only delete their own posts
-  postRouter.delete("/delPost", async (req, res) => {
+  postRouter.delete("/delPost", authenticateToken, async (req, res) => {
     console.log("Del Post API called!");
     try {
       const { post_id, user_id } = req.body; // Get post_id and user_id from the body
@@ -150,7 +164,7 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
     }
   });
 
-  postRouter.get("/getUserPosts", async (req, res) => {
+  postRouter.get("/getUserPosts", authenticateToken, async (req, res) => {
     const { user_id } = req.query;  // Get the user_id from query parameters
     
     if (!user_id) {
@@ -177,7 +191,7 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
     }
   });
 
-  postRouter.put("/updatePost", upload.single("postimg"), async (req, res) => {
+  postRouter.put("/updatePost", authenticateToken, upload.single("postimg"), async (req, res) => {
     console.log("Update Post API called!");
       try {
           var post = req.body;
@@ -209,7 +223,7 @@ postRouter.post("/addPost", upload.single("postimg"), async (req, res) => {
 
 
   //get posts by organization id
-  postRouter.get("/getPostsByOrg", async (req, res) => {
+  postRouter.get("/getPostsByOrg", authenticateToken, async (req, res) => {
     const { organization_id } = req.query;
   
     try {

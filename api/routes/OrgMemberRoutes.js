@@ -1,9 +1,23 @@
 import express from "express";
+import jwt from "jsonwebtoken";
 const orgMemberRouter = express.Router();
 import pool from "./PoolConnection.js";
 
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) return res.sendStatus(401); // Unauthorized
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403); // Forbidden
+        req.user = user;
+        next();
+    });
+}
+
 //get all organization members in the database
-orgMemberRouter.get("/orgMembers", async (req, res) => {
+orgMemberRouter.get("/orgMembers", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query("SELECT * from organization_member");
     res.json({ rows: result.rows });
@@ -15,7 +29,7 @@ orgMemberRouter.get("/orgMembers", async (req, res) => {
 });
 
 //get one organization member from the database based on member_id....make another one to get from their name
-orgMemberRouter.get("/getOrgMember", async (req, res) => {
+orgMemberRouter.get("/getOrgMember", authenticateToken, async (req, res) => {
   try {
     var id1 = req.query.member_id;
     console.log(id1);
@@ -30,7 +44,7 @@ orgMemberRouter.get("/getOrgMember", async (req, res) => {
 });
 
 //Upate org member based on id.
-orgMemberRouter.put("/updateOrgMember", async (req, res) => {
+orgMemberRouter.put("/updateOrgMember", authenticateToken, async (req, res) => {
   const { member_id, organization_id } = req.body;
   console.log("Incoming update data:", req.body);
 
@@ -56,7 +70,7 @@ orgMemberRouter.put("/updateOrgMember", async (req, res) => {
 
 
 //delete organization member based on id. 
-orgMemberRouter.delete("/delOrgMember", async (req, res) => {
+orgMemberRouter.delete("/delOrgMember", authenticateToken, async (req, res) => {
   try {
     var id1 = req.query.member_id;
     console.log(id1);
@@ -71,7 +85,7 @@ orgMemberRouter.delete("/delOrgMember", async (req, res) => {
 })
 
 // Get all members for a specific organization
-orgMemberRouter.get("/getByOrg", async (req, res) => {
+orgMemberRouter.get("/getByOrg", authenticateToken, async (req, res) => {
   const { organization_id } = req.query;
 
   if (!organization_id) {

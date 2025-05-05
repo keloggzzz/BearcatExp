@@ -1,9 +1,23 @@
 import express from "express";
 const orgRouter = express.Router();
 import pool from "./PoolConnection.js";
+import jwt from "jsonwebtoken";
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) return res.sendStatus(401); // Unauthorized
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403); // Forbidden
+        req.user = user;
+        next();
+    });
+}
 
 //get all organizations in the database
-orgRouter.get("/orgs", async (req, res) => {
+orgRouter.get("/orgs", authenticateToken, async (req, res) => {
     try {
       const result = await pool.query("SELECT * from organization ORDER BY name ASC");
       res.json({ rows:result.rows });
@@ -15,7 +29,7 @@ orgRouter.get("/orgs", async (req, res) => {
   });
 
   //get one organization from the database based on organization id. also need to make one to find based on name
-  orgRouter.get("/getOrg", async (req, res) => {
+  orgRouter.get("/getOrg", authenticateToken, async (req, res) => {
     try {
       const id1 = req.query.organization_id;
   
@@ -38,7 +52,7 @@ orgRouter.get("/orgs", async (req, res) => {
   
 
   //delete an organization. this should only be allowed by admins of the org_members...need to add more functionality for this
-  orgRouter.delete("/delOrg", async (req, res)=> {
+  orgRouter.delete("/delOrg", authenticateToken, async (req, res)=> {
     try{
       var id1= req.query.organization_id;
       console.log(id1);
@@ -56,7 +70,7 @@ orgRouter.get("/orgs", async (req, res) => {
   });
   // Create a new organization
 
-orgRouter.post("/createOrg", async (req, res) => {
+orgRouter.post("/createOrg", authenticateToken, async (req, res) => {
   const { name } = req.body;
   try {
     const result = await pool.query(
@@ -84,7 +98,7 @@ orgRouter.post("/createOrg", async (req, res) => {
 
 
 //update organization
-orgRouter.put("/updateOrg", async (req, res) => {
+orgRouter.put("/updateOrg", authenticateToken, async (req, res) => {
   console.log("Incoming update request:", req.body);
 
   let { organization_id, name, description } = req.body;

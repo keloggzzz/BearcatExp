@@ -4,6 +4,19 @@ import jwt from "jsonwebtoken";
 const userRouter = express.Router();
 import pool from "./PoolConnection.js";
 
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) return res.sendStatus(401); // Unauthorized
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403); // Forbidden
+        req.user = user;
+        next();
+    });
+}
+
 import multer from "multer";
 
 // Setup storage for uploaded images
@@ -51,10 +64,10 @@ userRouter.post("/login", async (req, res) => {
 
     let refreshToken = jwt.sign({ user_id: result.rows[0].user_id, fname: result.rows[0].firstname, lname: result.rows[0].lastname, type: result.rows[0].user_type, pic: result.rows[0].picture, role: "authenticated" }, process.env.REFRESH_SECRET, { expiresIn: "30d" })
 
-    //await pool.query(
-    //  "INSERT INTO user_sessions (user_id, refresh_token) VALUES ($1, $2)",
-    //  [result.rows[0].user_id, refreshToken]
-    //);
+    await pool.query(
+      "INSERT INTO user_sessions (user_id, refresh_token) VALUES ($1, $2)",
+      [result.rows[0].user_id, refreshToken]
+    );
 
     res.cookie("refresh_token", refreshToken, {
       httpOnly: true,
@@ -72,7 +85,7 @@ userRouter.post("/login", async (req, res) => {
 });
 
 //get all users in the database
-userRouter.get("/allUsers", async (req, res) => {
+userRouter.get("/allUsers", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -97,9 +110,9 @@ userRouter.get("/allUsers", async (req, res) => {
 
 
 //get  user by id
-userRouter.get("/getuser", async (req, res) => {
+userRouter.get("/getuser", authenticateToken, async (req, res) => {
   try {
-    const id = req.query.user_id;
+    const id = req.user.user_id;
 
     const result = await pool.query(`
       SELECT 
@@ -209,7 +222,7 @@ userRouter.post("/register", async (req, res) => {
 });
 
 //update profile information 
-userRouter.put("/updateProfileInfo", async (req, res) => {
+userRouter.put("/updateProfileInfo", authenticateToken, async (req, res) => {
   console.log("Update Profile Info API called!");
   try {
     const info = req.body;
@@ -277,7 +290,7 @@ userRouter.put("/updateProfileInfo", async (req, res) => {
 
 
 // Delete a user
-userRouter.delete("/delUser", async (req, res) => {
+userRouter.delete("/delUser", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.body;
 
@@ -295,7 +308,7 @@ userRouter.delete("/delUser", async (req, res) => {
 });
 
 //update email and password only
-userRouter.put("/updateCredentials", async (req, res) => {
+userRouter.put("/updateCredentials", authenticateToken, async (req, res) => {
   const { user_id, email, oldPassword, newPassword } = req.body;
 
   try {
